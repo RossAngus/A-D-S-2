@@ -1,0 +1,75 @@
+\documentclass[11pt]{article}
+\usepackage[colorlinks = true]{hyperref}
+\usepackage{geometry}                % See geometry.pdf to learn the layout options. There are lots.
+\geometry{letterpaper}                   % ... or a4paper or a5paper or ... 
+%\geometry{landscape}                % Activate for for rotated page geometry
+%\usepackage[parfill]{parskip}    % Activate to begin paragraphs with an empty line rather than an indent
+\usepackage{graphicx}
+\usepackage{amssymb}
+\usepackage{epstopdf}
+\DeclareGraphicsRule{.tif}{png}{.png}{`convert #1 `dirname #1`/`basename #1 .tif`.png}
+
+\title{ADS2 Assessed Exercise: Modeling a Cache -- Part II}
+\author{Wim Vanderbauwhede}
+\date{\vspace{-5ex}}                                           % Activate to display a given date or no date
+
+\begin{document}
+\maketitle
+
+\section{Aim}\label{aim}
+
+The aim of this coursework is to create a Java model for a simple cache as used in modern computer systems.
+
+\section{What to submit}\label{what-to-submit}
+
+For the second part of the assignment, you have to write the code for the \texttt{FullyAssocLiFoCache} class based on the provided skeleton and the required Java datastructures.
+\begin{itemize}
+\item You \emph{must} start from the provided code and you should \emph{only add your own code} in \texttt{FullyAssocLiFoCache.java}, you \emph{must} not modify or removed any part of the provided code. 
+\item You \emph{must} use the \texttt{Status} class for status reporting as it will be used by the testbench to verify the correctness of your code.
+\item If you use \texttt{println } statements in your code, they \emph{must} be guarded by an \texttt{if(VERBOSE)} guard, for example:
+\begin{verbatim}
+   if (VERBOSE) System.out.println("Flushing cache");
+\end{verbatim}
+
+\item You \emph{must} submit this code in a \emph{gzipped tar archive} (other formats will \emph{not} be accepted) through
+the Moodle submission system, and the filename \emph{must} be
+\emph{\textless{}your matric + 1st char of your name in lowercase\textgreater{}.tgz}, so for example if your matric number is \emph{1107023m}
+then your archive \emph{must} be named \emph{1107023m.tgz}. This archive
+\emph{must} contain a single folder named \emph{\textless{}your matric + 1st char of your name in lowercase\textgreater{}}. This folder
+\emph{must} contain a subfolder \texttt{src/ads2/cw1/} with following files:
+\begin{itemize}
+\item \texttt{Cache.java} as provided
+\item \texttt{FullyAssocLiFoCache.java}  in which you must implement the functionality for the cache model
+\item \texttt{Main.java} as provided
+\item \texttt{Memory.java} as provided
+\item \texttt{Status.java} as provided
+\item \texttt{TestBench.java} as provided
+\end{itemize}
+\end{itemize}
+
+\section{What is provided}\label{what-is-provided}
+
+You can get the coursework source files and the coursework description at \url{https://github.com/wimvanderbauwhede/ADS2}. If any updates would be required I will push them to this repository.
+
+
+\section{How to test your code}\label{how-to-test-your-code}
+
+You should unit test every method you implement. Once your code is fully implemented you can use the provided testbench to see if it works as expected.
+
+\section{Marking}\label{marking}
+
+
+\begin{itemize}
+\item Please note that whenever the specification (this document) says \emph{must}, then you will lose marks if you don't. In particular, if you do not follow the required structure and naming conventions for your submission, you will be penalised.  
+
+\item Your code will be marked using a test script. This script will test if your code builds correctly and runs correctly for a number of use cases (70\% of the marks). I will not modify the provided testbench code but I may modify the memory and cache parameters. I will also run an additional test. 
+\item The script will also perform source code analysis to see if you have used the correct API calls, data structures etc (30\% of the marks).  In particular, I will check
+\begin{itemize}
+\item Correctness of the constructor of the FullyAssocLiFoCache class.
+\item Correct use of the various attributes of the FullyAssocLiFoCache class in the implementation of its methods.
+\item Correct implementation and use use of the various methods of the FullyAssocLiFoCache class.
+\item Correct use of the Status class to report the status of the cache at every operation.
+\end{itemize}
+\end{itemize}
+
+\end{document}  
