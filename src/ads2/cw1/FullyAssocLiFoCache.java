@@ -11,199 +11,234 @@ import ads2.cw1.Cache;
 
 import java.util.Stack;
 import java.util.HashMap;
-import java.util.Set;
+import java.util.Map;
 
 class FullyAssocLiFoCache implements Cache {
 
-    final private static boolean VERBOSE = false;
+	final private static boolean VERBOSE = false;
 
-    final private int CACHE_SZ;
-    final private int CACHELINE_SZ;
-    final private int CL_MASK;
-    final private int CL_SHIFT;
+	final private int CACHE_SZ;
+	final private int CACHELINE_SZ;
+	final private int CL_MASK;
+	final private int CL_SHIFT;
 
-    // WV: because the cache replacement policy is "Last In First Out" you only need to know the "Last Used" location
-    // "Last Used" means accessed for either read or write
-    // The helper functions below contain all needed assignments to last_used_loc so I recommend you use these.
+	// because the cache replacement policy is "Last In First Out" you only need to
+	// know the "Last Used" location WV
+	// "Last Used" means accessed for either read or write WV
+	// The helper functions below contain all needed assignments to last_used_loc so
+	// I recommend you use these. WV
 
-    private int last_used_loc;
-    // WV: Your other data structures here
-    // Hint: You need 4 data structures
-    // - One for the cache storage
-    private int[] cache_storage;    
-    // - One to manage locations in the cache
-    private int location_stack;    
-    // And because the cache is Fully Associative:
-    // - One to translate between memory addresses and cache locations
-    private int address_to_cache_loc;
-    // - One to translate between cache locations and memory addresses  
-    private int cache_loc_to_address;
-    private int idx;
+	private int last_used_loc;
+	// - One for the cache storage WV
+	private int[] cache_storage;
+	// - One to manage locations in the cache WV
+	private int location_stack;
+	// - One to translate between memory addresses and cache locations WV
+	private Map<Integer, Integer> address_to_cache_loc;
+	// - One to translate between cache locations and memory addresses WV
+	private Map<Integer, Integer> cache_loc_to_address;
+	private int value;
+	private int data;
 
+	FullyAssocLiFoCache(int cacheSize, int cacheLineSize) {
 
-    FullyAssocLiFoCache(int cacheSize, int cacheLineSize) {
+		CACHE_SZ = cacheSize;
+		CACHELINE_SZ = cacheLineSize;
+		CL_MASK = CACHELINE_SZ - 1;
+		Double cls = Math.log(CACHELINE_SZ) / Math.log(2);
+		CL_SHIFT = cls.intValue();
 
-        CACHE_SZ =  cacheSize;
-        CACHELINE_SZ = cacheLineSize;
-        CL_MASK = CACHELINE_SZ - 1;
-        Double cls = Math.log(CACHELINE_SZ)/Math.log(2);
-        CL_SHIFT = cls.intValue();
-        
-        
-        last_used_loc = CACHE_SZ/CACHELINE_SZ - 1;
-        int[] cache_storage =   new int[CACHE_SZ];
-        int address = 0;
-        int value = cache_storage[address];
-        
-		location_stack =
-				
-		idx = address % CACHELINE_SZ;
-        address_to_cache_loc = address & CL_MASK;
-        		
-        cache_loc_to_address = cache_line_start_mem_address(0) + cache_entry_position(0);
-        		
+		last_used_loc = CACHE_SZ / CACHELINE_SZ - 1;
+		cache_storage = new int[CACHE_SZ];
 
-        // WV: Your initialisations here
-       
-    }
+		Stack<Integer> location_stack = new Stack<Integer>();
+		Map<Integer, Integer> address_to_cache_loc = new HashMap<Integer, Integer>();
+		Map<Integer, Integer> cache_loc_to_address = new HashMap<Integer, Integer>();
 
-    public void flush(int[] ram, Status status) {
-        if (VERBOSE) System.out.println("Flushing cache");
-        // WV: Your other data structures here
+		/**
+		 * These were my previous initialisations. I changed to hashmaps cos they look
+		 * like they make more sense RA value = cache_storage[address]; idx = address %
+		 * CACHELINE_SZ; address_to_cache_loc = address & CL_MASK; cache_loc_to_address
+		 * = cache_line_start_mem_address(0) + cache_entry_position(0);
+		 **/
 
-        status.setFlushed(true);
-    }
+	}
 
-    public int read(int address,int[] ram,Status status) {
-        return read_data_from_cache( ram, address, status);
-    }
+	// what is the purpose of this method? i mean, what should i implement here? is
+	// this to clear the cache? RA
+	public void flush(int[] ram, Status status) {
+		if (VERBOSE)
+			System.out.println("Flushing cache");
+		// Your other data structures here WV
+		status.setFlushed(true);
+	}
 
-    public void write(int address,int data, int[] ram,Status status) {
-        write_data_to_cache(ram, address, data, status);
-    }
+	public int read(int address, int[] ram, Status status) {
+		return read_data_from_cache(ram, address, status);
+	}
 
-    // The next two methods are the most important ones as they implement read() and write()
-    // Both methods modify the status object that is provided as argument
+	public void write(int address, int data, int[] ram, Status status) {
+		write_data_to_cache(ram, address, data, status);
+	}
 
-    private void write_data_to_cache(int[] ram, int address, int data, Status status){
-        status.setReadWrite(false); // i.e. a write
-        status.setAddress(address);
-        status.setData(data);
-        status.setEvicted(false);
-        // Your code here
-        // The cache policy is write-back, so the writes are always to the cache. 
-        // The update policy is write allocate: on a write miss, a cache line is loaded to cache, followed by a write operation. 
-         // ...
+	// The next two methods are the most important ones as they implement read() and
+	// write() WV
+	// Both methods modify the status object that is provided as argument WV
 
-    }
-        
-    private int read_data_from_cache(int[] ram,int address, Status status){
-        status.setReadWrite(true); // i.e. a read
-        status.setAddress(address);
-        status.setEvicted(false);
-        status.setHitOrMiss(true); // i.e. a hit
-        // Your code here
-        // Reads are always to the cache. On a read miss you need to fetch a cache line from the DRAM
-        // If the data is not yet in the cache (read miss),fetch it from the DRAM
-        // Get the data from the cache
-         // ...
-
-        int data = 0;
+	private void write_data_to_cache(int[] ram, int address, int data, Status status) {
+		status.setReadWrite(false); // i.e. a write
+		status.setAddress(address);
 		status.setData(data);
-        return data;
-    }
+		status.setEvicted(false);
 
-    // You might want to use the following methods as helpers
-    // but it is not mandatory, you may write your own as well
-    
-    // On read miss, fetch a cache line    
-    private void read_from_mem_on_miss(int[] ram,int address){
-        int[] cache_line = new int[CACHELINE_SZ];
-        int loc = 0;
-        
-        // Your code here
-         // ...
+		// if address already exists in cache: don't write, break away RA
+		while (address_in_cache_line(address) != cache_line_address(address)) {
+			// if cache not empty RA
+			if (CACHE_SZ == 0) {
+				// value to input = cached data at address location RA
+				// cache_line_address(address) returns address corresponding to the cache from
+				// main memory address
+				address_to_cache_loc.put(cache_line_address(address), data);
+				// else if cache isn't empty but not full RA
+			} else if (CACHE_SZ != cache_storage.length) {
+				// address + 1 RA
+				address += 1;
+				address_to_cache_loc.put(cache_line_address(address), data);
+			} else {
+				// if cache full set address to last position RA
+				address = cache_storage.length - 1;
+				// overwrite last position RA
+				address_to_cache_loc.put(cache_line_address(address), data);
+			}
+			break;
+		}
 
-        last_used_loc=loc;
-   }
+		// The cache policy is write-back, so the writes are always to the cache. WV
+		// The update policy is write allocate: on a write miss, a cache line is loaded
+		// to cache, followed by a write operation. WV
 
-    // On write, modify a cache line
-    private void update_cache_entry(int address, int data){
-        int loc = 0;
-         // Your code here
-         // ...
+	}
 
-        last_used_loc=loc;
-       }
+	private int read_data_from_cache(int[] ram, int address, Status status) {
+		status.setReadWrite(true); // i.e. a read WV
+		status.setAddress(address);
+		status.setEvicted(false);
+		status.setHitOrMiss(true); // i.e. a hit WV
 
-    // When we fetch a cache entry, we also update the last used location
-    private int fetch_cache_entry(int address){
-        int[] cache_line = null;
-        int loc = 0;
-         // Your code here
-         // ...
-        last_used_loc=loc;
-        return cache_line[cache_line_address(address)];
-    }
+		// while address exists in cache
+		if (address_in_cache_line(address) == cache_line_address(address)) {
+			// search the cache for the corresponding key RA
+			// value = hash value corresponding to key (address) RA
+			value = address_to_cache_loc.get(address);
+			// write value to corresponding cache location RA
+			cache_loc_to_address.put(cache_line_start_mem_address(address), value);
+			// read to data RA
+			// I don't think this actually updates the data field.... ? RA
+			int data = address_to_cache_loc.get(address);
+		} else {
+			// address doesn't exist, read from memory RA
+			// I don't think this actually updates the data field.... ? RA
+			int data = read_from_mem_on_miss(ram, address);
 
-    // Should return the next free location in the cache
-    private int get_next_free_location(){
-		return CACHELINE_SZ;
-         // Your code here
-         // ...
-        
-    }
+			// Reads are always to the cache. On a read miss you need to fetch a cache line
+			// from the DRAM 
+			// If the data is not yet in the cache (read miss),fetch it from the DRAM 
+			// Get the data from the cache WV
+		}
+		// return read value RA
+		status.setData(data);
+		return data;
+	}
 
-    // Given a cache location, evict the cache line stored there
-    private void evict_location(int loc){
-         // Your code here
-         // ...
-        
-    }
+	// You might want to use the following methods as helpers 
+	// but it is not mandatory, you may write your own as well WV
 
-    private boolean cache_is_full(){
-		return false;
-         // Your code here
-         // ...
-        
-    }
+	// On read miss, fetch a cache line WV
 
-    // When evicting a cache line, write its contents back to main memory
-    private void write_to_mem_on_evict(int[] ram, int loc){
+	// If its a read miss then it isn't in the cache. so am i fetching the value
+	// from the main memory? I assume yes, but am i then just reading from the main
+	// memory or is the point in this fetch so that i can write it to the cache? For 
+	// now i'm just going to read from MM RA
+	private int read_from_mem_on_miss(int[] ram, int address) {
+		int[] cache_line = new int[CACHELINE_SZ];
+		int loc = 0;
+		int data = cache_line_start_mem_address(address);
+		last_used_loc = loc;
+		return data;
+	}
 
-        int evicted_cl_address;
-        int[] cache_line;
-        if (VERBOSE) System.out.println("Cache line to RAM: ");
-        // Your code here
-         // ...
-        
+	// I don't think this method is necessary but i could be wrong RA
+	/**
+	 * On write, modify a cache line private void update_cache_entry(int address,
+	 * int data){ int loc = 0; // Your code here // ... last_used_loc=loc; }
+	 **/
 
-        evict_location(loc);
-    }
+	// When we fetch a cache entry, we also update the last used location WV
+	private int fetch_cache_entry(int address) {
+		int[] cache_line = null;
+		int loc = 0;
+		// Your code here WV
+		last_used_loc = loc;
+		return cache_line[cache_line_address(address)];
+	}
 
-    // Test if a main memory address is in a cache line stored in the cache
-    // In other words, is the value for this memory address stored in the cache?
-    private int address_in_cache_line(int address) {
+	// Should return the next free location in the cache WV
+	// Again, i don't think this is necessary, aren't hashmaps smarter than using 
+	// empty space (change size dynamically)? RA
+	/**
+	 * private int get_next_free_location() { return CACHELINE_SZ; // Your code here
+	 * WV
+	 * 
+	 * }
+	 **/
 
-    	int cl_address = (address-1)*CACHELINE_SZ;
+	// Given a cache location, evict the cache line stored there WV
+	private void evict_location(int loc) {
+		// maybe works? i don't know if i need to evict if I'm overwriting the last location anyway RA
+		address_to_cache_loc.remove(loc);
+		// Your code here WV
+
+	}
+
+	// I also don't think this method is required
+	/**
+	 * private boolean cache_is_full() { return false; // Your code here WV }
+	 **/
+
+	// When evicting a cache line, write its contents back to main memory WV
+	private void write_to_mem_on_evict(int[] ram, int loc) {
+
+		int evicted_cl_address;
+		int[] cache_line;
+		if (VERBOSE)
+			System.out.println("Cache line to RAM: ");
+		// Your code here WV
+
+		evict_location(loc);
+	}
+
+	// Test if a main memory address is in a cache line stored in the cache WV
+	// In other words, is the value for this memory address stored in the cache? WV
+	private int address_in_cache_line(int address) {
+		int cl_address = (address - 1) * CACHELINE_SZ;
 		return cl_address;
+	}
 
-        
-    }
+	// Given a main memory address, return the corresponding cache line address WV
+	private int cache_line_address(int address) {
+		return address >> CL_SHIFT;
+	}
 
-    // Given a main memory address, return the corresponding cache line address
-    private int cache_line_address(int address) {
-        return address>>CL_SHIFT;
-    }
+	// Given a main memory address, return the corresponding index into the cache
+	// line WV
+	private int cache_entry_position(int address) {
+		return address & CL_MASK;
+	}
 
-    // Given a main memory address, return the corresponding index into the cache line
-    private int cache_entry_position(int address) {
-        return address & CL_MASK;
-    }
-    // Given a cache line address, return the corresponding main memory address
-    // This is the starting address of the cache line in main memory
-    private int cache_line_start_mem_address(int cl_address) {
-        return cl_address<<CL_SHIFT;
-    }
+	// Given a cache line address, return the corresponding main memory address WV
+	// This is the starting address of the cache line in main memory WV
+	private int cache_line_start_mem_address(int cl_address) {
+		return cl_address << CL_SHIFT;
+	}
 
 }
