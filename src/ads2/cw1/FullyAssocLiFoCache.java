@@ -28,17 +28,17 @@ class FullyAssocLiFoCache implements Cache {
 	// The helper functions below contain all needed assignments to last_used_loc so
 	// I recommend you use these. WV
 
-	private int last_used_loc;
+	private int last_used_loc =0 ;
 	// - One for the cache storage WV
-	private int[] cache_storage;
+	private int[] cache_storage = {};
 	// - One to manage locations in the cache WV
-	private int location_stack;
+	private int location_stack = 0;
 	// - One to translate between memory addresses and cache locations WV
-	private Map<Integer, Integer> address_to_cache_loc;
+	private Map<Integer, Integer> address_to_cache_loc = new HashMap<Integer, Integer>();
 	// - One to translate between cache locations and memory addresses WV
-	private Map<Integer, Integer> cache_loc_to_address;
-	private int value;
-	private int data;
+	private Map<Integer, Integer> cache_loc_to_address = new HashMap<Integer, Integer>();
+	private int value = 0;
+	private int data = 0;
 
 	FullyAssocLiFoCache(int cacheSize, int cacheLineSize) {
 
@@ -129,12 +129,14 @@ class FullyAssocLiFoCache implements Cache {
 		if (address_in_cache_line(address) == cache_line_address(address)) {
 			// search the cache for the corresponding key RA
 			// value = hash value corresponding to key (address) RA
-			value = address_to_cache_loc.get(address);
-			// write value to corresponding cache location RA
-			cache_loc_to_address.put(cache_line_start_mem_address(address), value);
-			// read to data RA
-			// I don't think this actually updates the data field.... ? RA
-			int data = address_to_cache_loc.get(address);
+			if(address_to_cache_loc.get(address) !=null) {
+				value = address_to_cache_loc.get(address);
+				// write value to corresponding cache location RA
+				cache_loc_to_address.put(cache_line_start_mem_address(address), value);
+				// read to data RA
+				// I don't think this actually updates the data field.... ? RA
+				data = address_to_cache_loc.get(address);
+			}
 		} else {
 			// address doesn't exist, read from memory RA
 			// I don't think this actually updates the data field.... ? RA
