@@ -107,6 +107,7 @@ class FullyAssocLiFoCache implements Cache {
 			} else {
 				// if cache full set address to last position RA
 				address = cache_storage.length - 1;
+				write_to_mem_on_evict(ram, address, data);
 				// overwrite last position RA
 				address_to_cache_loc.put(cache_line_address(address), data);
 			}
@@ -135,7 +136,7 @@ class FullyAssocLiFoCache implements Cache {
 				cache_loc_to_address.put(cache_line_start_mem_address(address), value);
 				// read to data RA
 				// I don't think this actually updates the data field.... ? RA
-				data = address_to_cache_loc.get(address);
+				data = fetch_cache_entry(address);
 			}
 		} else {
 			// address doesn't exist, read from memory RA
@@ -177,7 +178,7 @@ class FullyAssocLiFoCache implements Cache {
 
 	// When we fetch a cache entry, we also update the last used location WV
 	private int fetch_cache_entry(int address) {
-		int[] cache_line = null;
+		int[] cache_line = cache_storage;
 		int loc = 0;
 		// Your code here WV
 		last_used_loc = loc;
@@ -208,14 +209,20 @@ class FullyAssocLiFoCache implements Cache {
 	 **/
 
 	// When evicting a cache line, write its contents back to main memory WV
-	private void write_to_mem_on_evict(int[] ram, int loc) {
-
-		int evicted_cl_address;
-		int[] cache_line;
+	private void write_to_mem_on_evict(int[] ram, int loc, int data) {
+		
+		data = 0;
+		//um, i guess i could do this? or just use loc? RA
+		int evicted_cl_address = loc;
+		//I'll assume I'm meant to use this but I haven't RA
+		int[] cache_line = ram;
 		if (VERBOSE)
 			System.out.println("Cache line to RAM: ");
+		 	//place this data back in memory (i dont think this is how to do it) RA
+		 	cache_loc_to_address.put(cache_line_start_mem_address(evicted_cl_address), data);
 		// Your code here WV
-
+		 	
+		 //evict this data after written back to memory RA
 		evict_location(loc);
 	}
 
