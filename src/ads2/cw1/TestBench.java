@@ -65,10 +65,10 @@ class TestBench {
         System.out.println(info);
         int score=0;
         for (int i=0; i<MEM_SZ;i++) {
-//            System.out.println("Writing "+i+" to "+i);
+            //System.out.println("Writing "+i+" to "+i);
             mem.write(i,reference[i]);
 
-//            System.out.println("Assert: "+mem.status.hit());
+            //System.out.println("Assert: "+mem.status.hit());
 
             // Every i % CACHELINE_SZ should be miss, all other should be hit
             boolean hit_miss;
@@ -93,8 +93,9 @@ class TestBench {
             // The stack size will decrease with every cache line until it hits 0
             boolean free;
             if ( i < CACHE_SZ ) {
-//                free = mem.status.freeLocations() == 7 - (i>>4);
+                //free = mem.status.freeLocations() == 7 - (i>>4);
                 free = mem.status.freeLocations() == (CACHE_SZ/CACHELINE_SZ) - 1 - (i >> CL_SHIFT);
+                System.out.println("size" + CACHE_SZ + "and" +  free);
             } else {
                 free = mem.status.freeLocations() == 0;
             }

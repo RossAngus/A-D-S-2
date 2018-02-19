@@ -19,6 +19,6 @@ public class Main {
         // Create a Testbench instance
         TestBench tb = new TestBench(mem);
         // Run the first 3 tests in the testbench
-        tb.run(2);
+        tb.run(1);
     }
 }
