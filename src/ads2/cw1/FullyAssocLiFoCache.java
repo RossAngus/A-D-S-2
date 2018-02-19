@@ -22,7 +22,8 @@ class FullyAssocLiFoCache implements Cache {
 
 	private int last_used_loc = 0;
 	// - One for the cache storage WV
-	private int[][] cache_storage = {};
+	private int[] cache_storage = {};
+	private int[] cache_storage;
 	// - One to manage locations in the cache WV
 	private int location_stack;
 	// - One to translate between memory addresses and cache locations WV

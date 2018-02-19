@@ -65,10 +65,10 @@ class TestBench {
         System.out.println(info);
         int score=0;
         for (int i=0; i<MEM_SZ;i++) {
-            //System.out.println("Writing "+i+" to "+i);
+            System.out.println("Writing "+i+" to "+i);
             mem.write(i,reference[i]);
 
-            //System.out.println("Assert: "+mem.status.hit());
+            System.out.println("Assert hit: "+mem.status.hit());
 
             // Every i % CACHELINE_SZ should be miss, all other should be hit
             boolean hit_miss;
@@ -93,9 +93,8 @@ class TestBench {
             // The stack size will decrease with every cache line until it hits 0
             boolean free;
             if ( i < CACHE_SZ ) {
-                //free = mem.status.freeLocations() == 7 - (i>>4);
+//                free = mem.status.freeLocations() == 7 - (i>>4);
                 free = mem.status.freeLocations() == (CACHE_SZ/CACHELINE_SZ) - 1 - (i >> CL_SHIFT);
-                System.out.println("size" + CACHE_SZ + "and" +  free);
             } else {
                 free = mem.status.freeLocations() == 0;
             }
@@ -119,7 +118,7 @@ class TestBench {
             } else {
                 content_ok = mem.ram[i] == 0;
             }
-//            System.out.println("Content: "+mem.ram[i] );
+            System.out.println("Content: "+mem.ram[i] );
 
             if (hit_miss) ++score;
             if (evicted) ++score;
@@ -135,7 +134,7 @@ class TestBench {
         }
         mem.flush();
         boolean mem_content_ok =  Arrays.equals(reference, mem.ram);
-//        System.out.println(mem_content_ok);
+        System.out.println(mem_content_ok);
         assert mem_content_ok;
         if (mem_content_ok) {
             score+=MEM_SZ;
@@ -159,7 +158,7 @@ class TestBench {
         * */
         int score=0;
         for (int i=0; i<MEM_SZ;i++) {
-//            System.out.println("Reading " + i + " from mem and writing to " + i);
+            System.out.println("Reading " + i + " from mem and writing to " + i);
             buffer[i] = mem.read(i);
 
 
