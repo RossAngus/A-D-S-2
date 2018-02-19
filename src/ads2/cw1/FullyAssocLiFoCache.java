@@ -10,10 +10,6 @@ package ads2.cw1;
 import ads2.cw1.Cache;
 
 import java.util.Stack;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Arrays;
-
 
 class FullyAssocLiFoCache implements Cache {
 
@@ -24,11 +20,11 @@ class FullyAssocLiFoCache implements Cache {
 	final private int CL_MASK;
 	final private int CL_SHIFT;
 
-	private int last_used_loc =0 ;
+	private int last_used_loc = 0;
 	// - One for the cache storage WV
-	private int[] cache_storage = {};
+	private int[][] cache_storage = {};
 	// - One to manage locations in the cache WV
-	private int location_stack = 0;
+	private int location_stack;
 	// - One to translate between memory addresses and cache locations WV
 	private int address_to_cache_loc;
 	// - One to translate between cache locations and memory addresses WV
@@ -46,12 +42,12 @@ class FullyAssocLiFoCache implements Cache {
 		Double cls = Math.log(CACHELINE_SZ) / Math.log(2);
 		CL_SHIFT = cls.intValue();
 
+		int[] location_stack = new int[CACHE_SZ];
 		last_used_loc = CACHE_SZ / CACHELINE_SZ - 1;
-		cache_storage = new int[CACHE_SZ];
-		Stack<Integer> location_stack = new Stack<Integer>();
+		cache_storage = new int[CACHE_SZ][CACHE_SZ];
 		idx = address % CACHELINE_SZ;
-		value = cache_storage[address];
-		
+		// value = cache_storage[address];
+
 		address_to_cache_loc = address & CL_MASK;
 		cache_loc_to_address = cache_line_start_mem_address(0) + cache_entry_position(0);
 
@@ -71,39 +67,41 @@ class FullyAssocLiFoCache implements Cache {
 		write_data_to_cache(ram, address, data, status);
 	}
 
-
 	private void write_data_to_cache(int[] ram, int address, int data, Status status) {
 		status.setReadWrite(false); // i.e. a write
 		status.setAddress(address);
 		status.setData(data);
 		status.setEvicted(false);
+		
+		
+		if (address < 8) {
+			if (cache_storage[0][1] == 0) {
+				for (int i = 0; i < CACHELINE_SZ; i += 1) {
+					cache_storage[0][i] = data+i;
+					System.out.println(cache_storage[0][i]);
+				}
 
-		// if address already exists in cache: don't write, break away RA
-		while (address_in_cache_line(address) != cache_line_address(address)) {
-			// if cache empty RA
-			if (CACHE_SZ == 0) {
-				//write to first location
-				cache_storage[CACHE_SZ] = data;
-				//if not empty but not full
-			} else if (CACHE_SZ != cache_storage.length) {
+			} else if (address < 7) {
 				address = get_next_free_location();
-				//write to first available location
-				cache_storage[address] = data;
-			} else {
-				// if cache full set address to last position RA
+				for (int i = 0; i < CACHELINE_SZ; i += 1) {
+					cache_storage[address][i] = ((data*CACHELINE_SZ)+i);
+					System.out.println(cache_storage[address][i]);
+				}
+
+			} else if (address == 7){
 				address = cache_storage.length - 1;
 				write_to_mem_on_evict(ram, address, data);
-				// overwrite last position RA
-				cache_storage[address] = data;
+				for (int i = 0; i < CACHELINE_SZ; i += 1) {
+					cache_storage[address][i] = ((data*CACHELINE_SZ)+i);
+					System.out.println(cache_storage[address][i]);
+				}
 			}
-			break;
 		}
 
-		// The cache policy is write-back, so the writes are always to the cache. WV
-		// The update policy is write allocate: on a write miss, a cache line is loaded
-		// to cache, followed by a write operation. WV
-
+		location_stack -= 1;
+	
 	}
+	
 
 	private int read_data_from_cache(int[] ram, int address, Status status) {
 		status.setReadWrite(true); // i.e. a read WV
@@ -111,25 +109,19 @@ class FullyAssocLiFoCache implements Cache {
 		status.setEvicted(false);
 		status.setHitOrMiss(true); // i.e. a hit WV
 
-		// while address exists in cache
-		if (address_in_cache_line(address) == cache_line_address(address)) {
-			// search the cache for the corresponding key RA
-			// value = hash value corresponding to key (address) RA
-			if(cache_storage[address] != 0) {
-				value = cache_storage[address];
-				// write value to corresponding cache location RA
-				cache_loc_to_address = cache_line_start_mem_address(address) + cache_entry_position(address);
-				// read to data RA
-				data = fetch_cache_entry(cache_loc_to_address);
-			}
-		} else {
-			int data = read_from_mem_on_miss(ram, address);
+		for (int j = 0; j < 128; j++) {
+			for (int i = 0; i < 8; i++) {
+				if (j == address) {
+					data = cache_storage[i][j];
+					//System.out.println(cache_storage[i][j]);
+			}else {
+					int data = read_from_mem_on_miss(ram, address);
+					}
+				}
+			status.setData(data);
 		}
-		// return read value RA
-		status.setData(data);
 		return data;
 	}
-
 
 	private int read_from_mem_on_miss(int[] ram, int address) {
 		int[] cache_line = new int[CACHELINE_SZ];
@@ -139,46 +131,53 @@ class FullyAssocLiFoCache implements Cache {
 		return data;
 	}
 
-
-	private void update_cache_entry(int address, int data){ 
-		int loc = 0; 
-	 last_used_loc=loc; }
-	 
+	private void update_cache_entry(int address, int data) {
+		int loc = 0;
+		last_used_loc = loc;
+	}
 
 	// When we fetch a cache entry, we also update the last used location WV
 	private int fetch_cache_entry(int address) {
-		int[] cache_line = cache_storage;
+		int[] cache_line = new int[CACHELINE_SZ];
 		int loc = 0;
 		// Your code here WV
 		last_used_loc = loc;
 		return cache_line[cache_line_address(address)];
 	}
 
-	 private int get_next_free_location() { 
-		 int i = 0;
-		 for(i=0; i < cache_storage.length; i++)
-			    if(cache_storage[i] == 0)
-		 
-		return i;
-		return i;
-	 }
+	private int get_next_free_location() {
 
-	private void evict_location(int loc) {
-		cache_storage[loc] = 0;
+		int row = 0;
+		int col = 0;
+		for (int j = 0; j < 128; j++) {
+			for (int i = 0; i < 8; i++) {
+				if (cache_storage[i][j] == 0)
+					;
+				row = i;
+				col = j;
+			}
+		}
+		return cache_storage[row][col];
 	}
 
-	 private boolean cache_is_full() {
-		 return false; 
-	 }
+	private void evict_location(int loc) {
+		for (int i = 0; i < 8; i++) {
+			cache_storage[loc][i] = 0;
+		}
+	}
+
+	private boolean cache_is_full() {
+		return false;
+	}
 
 	// When evicting a cache line, write its contents back to main memory WV
 	private void write_to_mem_on_evict(int[] ram, int loc, int data) {
-		
+
 		int evicted_cl_address = loc;
 		int[] cache_line = ram;
 		if (VERBOSE)
 			System.out.println("Cache line to RAM: ");
-			ram[cache_loc_to_address] = data;
+		ram[cache_loc_to_address] = data;
 		evict_location(loc);
 	}
 
