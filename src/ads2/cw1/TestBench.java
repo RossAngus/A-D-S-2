@@ -65,10 +65,10 @@ class TestBench {
         System.out.println(info);
         int score=0;
         for (int i=0; i<MEM_SZ;i++) {
-            System.out.println("Writing "+i+" to "+i);
+//            System.out.println("Writing "+i+" to "+i);
             mem.write(i,reference[i]);
 
-            System.out.println("Assert hit: "+mem.status.hit());
+//            System.out.println("Assert: "+mem.status.hit());
 
             // Every i % CACHELINE_SZ should be miss, all other should be hit
             boolean hit_miss;
@@ -118,7 +118,7 @@ class TestBench {
             } else {
                 content_ok = mem.ram[i] == 0;
             }
-            System.out.println("Content: "+mem.ram[i] );
+//            System.out.println("Content: "+mem.ram[i] );
 
             if (hit_miss) ++score;
             if (evicted) ++score;
@@ -134,13 +134,13 @@ class TestBench {
         }
         mem.flush();
         boolean mem_content_ok =  Arrays.equals(reference, mem.ram);
-        System.out.println(mem_content_ok);
+//        System.out.println(mem_content_ok);
         assert mem_content_ok;
         if (mem_content_ok) {
             score+=MEM_SZ;
         } else {
             for (int k=0;k<MEM_SZ;k++) {
-                if (reference[k] == buffer[k]) {
+                if (reference[k] == mem.ram[k]) {
                     score++;
                 }
             }
@@ -158,7 +158,7 @@ class TestBench {
         * */
         int score=0;
         for (int i=0; i<MEM_SZ;i++) {
-            System.out.println("Reading " + i + " from mem and writing to " + i);
+//            System.out.println("Reading " + i + " from mem and writing to " + i);
             buffer[i] = mem.read(i);
 
 

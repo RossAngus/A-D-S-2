@@ -21,9 +21,8 @@ class FullyAssocLiFoCache implements Cache {
 	final private int CL_SHIFT;
 
 	private int last_used_loc = 0;
-	// - One for the cache storage WV
-	private int[] cache_storage = {};
-	private int[] cache_storage;
+	// why not a 2D array?
+	private int[][] cache_storage;
 	// - One to manage locations in the cache WV
 	private int location_stack;
 	// - One to translate between memory addresses and cache locations WV
@@ -47,7 +46,7 @@ class FullyAssocLiFoCache implements Cache {
 		last_used_loc = CACHE_SZ / CACHELINE_SZ - 1;
 		cache_storage = new int[CACHE_SZ][CACHE_SZ];
 		idx = address % CACHELINE_SZ;
-		// value = cache_storage[address];
+
 
 		address_to_cache_loc = address & CL_MASK;
 		cache_loc_to_address = cache_line_start_mem_address(0) + cache_entry_position(0);
@@ -74,31 +73,46 @@ class FullyAssocLiFoCache implements Cache {
 		status.setData(data);
 		status.setEvicted(false);
 		
-		
+		//if within cache size
 		if (address < 8) {
+			//if first position == empty
 			if (cache_storage[0][1] == 0) {
+				//loop for size of cache line
 				for (int i = 0; i < CACHELINE_SZ; i += 1) {
+					//write entire cache line to single location
 					cache_storage[0][i] = data+i;
+					//debugging
 					System.out.println(cache_storage[0][i]);
 				}
 
+			//else, if not first position, but not last
 			} else if (address < 7) {
+				//address = next free location
 				address = get_next_free_location();
+				//loop for size of cache line
 				for (int i = 0; i < CACHELINE_SZ; i += 1) {
+					//write entire cache line to single location
 					cache_storage[address][i] = ((data*CACHELINE_SZ)+i);
+					//debugging
 					System.out.println(cache_storage[address][i]);
 				}
 
+			//if final position
 			} else if (address == 7){
+				//write to final position
 				address = cache_storage.length - 1;
+				//evict whatever is in the last position
 				write_to_mem_on_evict(ram, address, data);
+				//loop for size of cache line
 				for (int i = 0; i < CACHELINE_SZ; i += 1) {
+					//write entire cache line to single location
 					cache_storage[address][i] = ((data*CACHELINE_SZ)+i);
+					//debugging
 					System.out.println(cache_storage[address][i]);
 				}
 			}
 		}
-
+		//trying to figure out how testbench determines 'free locs'
 		location_stack -= 1;
 	
 	}
@@ -110,17 +124,23 @@ class FullyAssocLiFoCache implements Cache {
 		status.setEvicted(false);
 		status.setHitOrMiss(true); // i.e. a hit WV
 
+		//for each piece of data
 		for (int j = 0; j < 128; j++) {
+			//for each cache position
 			for (int i = 0; i < 8; i++) {
+				//if data= address
 				if (j == address) {
+					//data = corresponding location
 					data = cache_storage[i][j];
-					//System.out.println(cache_storage[i][j]);
 			}else {
+					//else, read from memory
 					int data = read_from_mem_on_miss(ram, address);
 					}
 				}
+			//set data to the new value
 			status.setData(data);
 		}
+		//return
 		return data;
 	}
 
@@ -137,17 +157,15 @@ class FullyAssocLiFoCache implements Cache {
 		last_used_loc = loc;
 	}
 
-	// When we fetch a cache entry, we also update the last used location WV
 	private int fetch_cache_entry(int address) {
 		int[] cache_line = new int[CACHELINE_SZ];
 		int loc = 0;
-		// Your code here WV
 		last_used_loc = loc;
 		return cache_line[cache_line_address(address)];
 	}
 
 	private int get_next_free_location() {
-
+		//search array for first free location
 		int row = 0;
 		int col = 0;
 		for (int j = 0; j < 128; j++) {
@@ -162,6 +180,7 @@ class FullyAssocLiFoCache implements Cache {
 	}
 
 	private void evict_location(int loc) {
+		//evict entire byte from cache location
 		for (int i = 0; i < 8; i++) {
 			cache_storage[loc][i] = 0;
 		}
@@ -171,7 +190,6 @@ class FullyAssocLiFoCache implements Cache {
 		return false;
 	}
 
-	// When evicting a cache line, write its contents back to main memory WV
 	private void write_to_mem_on_evict(int[] ram, int loc, int data) {
 
 		int evicted_cl_address = loc;
@@ -182,26 +200,20 @@ class FullyAssocLiFoCache implements Cache {
 		evict_location(loc);
 	}
 
-	// Test if a main memory address is in a cache line stored in the cache WV
-	// In other words, is the value for this memory address stored in the cache? WV
 	private int address_in_cache_line(int address) {
+		//set address
 		int cl_address = (address - 1) * CACHELINE_SZ;
 		return cl_address;
 	}
 
-	// Given a main memory address, return the corresponding cache line address WV
 	private int cache_line_address(int address) {
 		return address >> CL_SHIFT;
 	}
 
-	// Given a main memory address, return the corresponding index into the cache
-	// line WV
 	private int cache_entry_position(int address) {
 		return address & CL_MASK;
 	}
 
-	// Given a cache line address, return the corresponding main memory address WV
-	// This is the starting address of the cache line in main memory WV
 	private int cache_line_start_mem_address(int cl_address) {
 		return cl_address << CL_SHIFT;
 	}
